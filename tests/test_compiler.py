@@ -39,7 +39,7 @@ def test_underspecifiedVisCollection():
 		for rec in df._recInfo:
 			assert (rec["action"] in actions)
 
-	multipleViewActions = ["User Defined"]
+	multipleViewActions = ["View Collection"]
 
 	df = pd.read_csv("lux/data/car.csv")
 	df["Year"] = pd.to_datetime(df["Year"], format='%Y') # change pandas dtype for the column "Year" to datetype
