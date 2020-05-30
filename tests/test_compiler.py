@@ -1,35 +1,75 @@
 from .context import lux
 import pytest
 import pandas as pd
+
+def test_underspecifiedNoVis():
+	noViewActions = ["Correlation", "Distribution", "Category"]
+
+	def test_showMore(df, actions):
+		df.showMore()
+		assert (len(df._recInfo) > 0)
+		for rec in df._recInfo:
+			assert (rec["action"] in actions)
+
+	df = pd.read_csv("lux/data/car.csv")
+	test_showMore(df,noViewActions)
+	assert len(df.viewCollection)==0
+
 def test_underspecifiedSingleVis():
+	oneViewActions = ["Enhance", "Filter", "Generalize"]
+
+	def test_showMore(df, actions):
+		df.showMore()
+		assert (len(df._recInfo) > 0)
+		for rec in df._recInfo:
+			assert (rec["action"] in actions)
+
 	df = pd.read_csv("lux/data/car.csv")
 	df.setContext([lux.Spec(attribute = "MilesPerGal"),lux.Spec(attribute = "Weight")])
 	assert len(df.viewCollection)==1
 	assert df.viewCollection[0].mark == "scatter"
 	for attr in df.viewCollection[0].specLst: assert attr.dataModel=="measure"
 	for attr in df.viewCollection[0].specLst: assert attr.dataType=="quantitative"
+	test_showMore(df,oneViewActions)
 
 def test_underspecifiedVisCollection():
+	def test_showMore(df, actions):
+		df.showMore()
+		assert (len(df._recInfo) > 0)
+		for rec in df._recInfo:
+			assert (rec["action"] in actions)
+
+	multipleViewActions = ["User Defined"]
+
 	df = pd.read_csv("lux/data/car.csv")
 	df["Year"] = pd.to_datetime(df["Year"], format='%Y') # change pandas dtype for the column "Year" to datetype
+
 	df.setContext([lux.Spec(attribute = ["Horsepower","Weight","Acceleration"]),lux.Spec(attribute = "Year",channel="x")])
 	assert len(df.viewCollection)==3
 	assert df.viewCollection[0].mark == "line" 
 	for vc in df.viewCollection: 
 		assert (vc.getAttrByChannel("x")[0].attribute == "Year")
+	test_showMore(df,multipleViewActions)
+
 	df.setContext([lux.Spec(attribute = "?"),lux.Spec(attribute = "Year",channel="x")])
-	assert len(df.viewCollection) == len(list(df.columns))
+	assert len(df.viewCollection) == len(list(df.columns))-1 # we remove year by year so its 8 vis instead of 9
 	for vc in df.viewCollection: 
 		assert (vc.getAttrByChannel("x")[0].attribute == "Year")
+	test_showMore(df,multipleViewActions)
+
 	df.setContext([lux.Spec(attribute = "?",dataType="quantitative"),lux.Spec(attribute = "Year")])
 	assert len(df.viewCollection) == len([view.getAttrByDataType("quantitative") for view in df.viewCollection]) # should be 5
+	test_showMore(df,multipleViewActions)
 
 	df.setContext([lux.Spec(attribute = "?", dataModel="measure"),lux.Spec(attribute="MilesPerGal",channel="y")])
 	for vc in df.viewCollection: 
 		print (vc.getAttrByChannel("y")[0].attribute == "MilesPerGal")
-	
+	test_showMore(df,multipleViewActions)
+
 	df.setContext([lux.Spec(attribute = "?", dataModel="measure"),lux.Spec(attribute = "?", dataModel="measure")])
-	assert len(df.viewCollection) == len([view.getAttrByDataModel("measure") for view in df.viewCollection]) #should be 25 
+	assert len(df.viewCollection) == len([view.getAttrByDataModel("measure") for view in df.viewCollection]) #should be 25
+	test_showMore(df,multipleViewActions)
+
 def test_parse():
 	df = pd.read_csv("lux/data/car.csv")
 	df.setContext([lux.Spec("Origin=?"),lux.Spec(attribute = "MilesPerGal")])
